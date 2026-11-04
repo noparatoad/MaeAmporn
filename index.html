@@ -59,7 +59,21 @@ body { font-family: 'Kanit', sans-serif; background-color: #fff7ed; }
         <button class="btn btn-success btn-lg py-3 fw-bold" onclick="processPayment()">💳 คิดเงิน / แสดง QR Code</button>
         <button class="btn btn-outline-danger" onclick="clearCart()">ล้างรายการ</button>
     </div>
-
+    <div class="card shadow-sm mb-4 border-primary">
+         <div class="card-body">
+             <h5 class="card-title fw-bold">💵 สร้าง QR จากยอดที่กรอกเอง</h5>
+             <div class="small text-muted mb-2">ใช้เมื่อไม่ต้องเลือกเมนู ยอดนี้จะถูกบันทึกเป็นบิลและรวมในยอดขายด้วย</div>
+             <div class="input-group mb-2">
+                  <input type="number" id="custom-amount" inputmode="decimal" min="1" step="0.01"
+                   class="form-control form-control-lg" placeholder="กรอกยอดเงิน"
+                   onkeydown="if(event.key==='Enter')processCustomPayment()">
+            <span class="input-group-text">฿</span>
+        </div>
+        <input type="text" id="custom-note" class="form-control mb-2" maxlength="60"
+               placeholder="หมายเหตุ (ไม่บังคับ) เช่น โต๊ะ 5, สั่งกลับบ้าน">
+        <button class="btn btn-primary w-100 py-2 fw-bold" onclick="processCustomPayment()">📱 สร้าง QR Code</button>
+    </div>
+</div>
     <!-- Modal QR -->
     <div class="modal fade" id="paymentModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -191,6 +205,7 @@ let currentTotal = 0;
 let currentOrderId = '';
 let savedCartKey = '';
 let saving = false;
+let payMode = 'cart';   // 'cart' = จากตะกร้า, 'custom' = ยอดกรอกเอง
 
 const COLOR_PALETTE = [
     'linear-gradient(135deg,#ff416c,#ff4b2b)',
@@ -335,13 +350,35 @@ function cartKey() {
     return Object.keys(cart).sort().map(k => k + ':' + cart[k]).join(',') + '|' + currentTotal;
 }
 
-async function processPayment() {
+// ปุ่มคิดเงินจากตะกร้า
+function processPayment() {
     if (currentTotal <= 0) return alert('กรุณาเลือกรายการก่อนครับ');
+    const items = Object.keys(cart).map(id => {
+        const item = menuData.find(m => String(m.id) === String(id));
+        return item ? { name: `${item.name} [${item.category}]`, qty: cart[id] } : null;
+    }).filter(Boolean);
+    startPayment('cart', currentTotal, items, cartKey());
+}
+
+// ปุ่มสร้าง QR จากยอดที่กรอกเอง
+function processCustomPayment() {
+    const amount = Math.round(Number($('custom-amount').value) * 100) / 100;
+    if (!(amount > 0)) return alert('กรุณากรอกยอดเงินให้ถูกต้อง');
+    if (amount > 100000) return alert('ยอดสูงเกินไป กรุณาตรวจสอบอีกครั้ง');
+
+    const note = $('custom-note').value.trim();
+    const name = note ? `ยอดกรอกเอง: ${note}` : 'ยอดกรอกเอง';
+    startPayment('custom', amount, [{ name: name, qty: 1 }], 'custom|' + amount + '|' + note);
+}
+
+// ใช้ร่วมกันทั้ง 2 แบบ: สร้าง QR + บันทึกบิล (ไม่สร้างซ้ำถ้า key เดิม)
+async function startPayment(mode, amount, items, key) {
     if (saving) return;
+    payMode = mode;
 
-    $('pay-amount').innerText = currentTotal;
+    $('pay-amount').innerText = Number.isInteger(amount) ? amount : amount.toFixed(2);
 
-    const payload = generatePromptPayPayload(PROMPTPAY_ID, currentTotal);
+    const payload = generatePromptPayPayload(PROMPTPAY_ID, amount);
     const qrBox = $('qr-canvas');
     qrBox.innerHTML = '';
     new QRCode(qrBox, { text: payload, width: 260, height: 260, correctLevel: QRCode.CorrectLevel.M });
@@ -350,9 +387,7 @@ async function processPayment() {
     $('btn-confirm-paid').classList.remove('d-none');
     showModal('paymentModal');
 
-    const key = cartKey();
-
-    // ตะกร้าเดิมที่บันทึกบิลแล้ว ไม่สร้างบิลซ้ำ
+    // ยอด/รายการเดิมที่บันทึกบิลแล้ว ไม่สร้างบิลซ้ำ
     if (currentOrderId && key === savedCartKey) {
         $('btn-confirm-paid').disabled = false;
         $('save-status').className = 'text-muted small mt-2';
@@ -366,12 +401,7 @@ async function processPayment() {
     saving = true;
 
     try {
-        const orderItems = Object.keys(cart).map(id => {
-            const item = menuData.find(m => String(m.id) === String(id));
-            return item ? { name: `${item.name} [${item.category}]`, qty: cart[id] } : null;
-        }).filter(Boolean);
-
-        const res = await api({ action: 'saveOrder', order: { items: orderItems, totalAmount: currentTotal } });
+        const res = await api({ action: 'saveOrder', order: { items: items, totalAmount: amount } });
         if (res.status !== 'success') throw new Error(res.message || 'บันทึกไม่สำเร็จ');
 
         currentOrderId = res.orderId;
@@ -383,7 +413,7 @@ async function processPayment() {
         currentOrderId = '';
         savedCartKey = '';
         $('save-status').className = 'text-danger small mt-2';
-        $('save-status').innerText = 'บันทึกบิลไม่สำเร็จ ปิดหน้าต่างแล้วกดคิดเงินใหม่อีกครั้ง';
+        $('save-status').innerText = 'บันทึกบิลไม่สำเร็จ ปิดหน้าต่างแล้วกดสร้าง QR ใหม่อีกครั้ง';
     } finally {
         saving = false;
     }
@@ -399,7 +429,16 @@ async function confirmPaid() {
 
         btn.classList.add('d-none');
         $('paid-done').classList.remove('d-none');
-        clearCart();
+
+        if (payMode === 'custom') {
+            // ล้างเฉพาะช่องกรอกยอด ตะกร้าไม่ถูกแตะ
+            currentOrderId = '';
+            savedCartKey = '';
+            $('custom-amount').value = '';
+            $('custom-note').value = '';
+        } else {
+            clearCart();
+        }
         setTimeout(() => hideModal('paymentModal'), 1200);
     } catch (e) {
         alert(e.message || e);
