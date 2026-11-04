@@ -1,75 +1,48 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบคิดเงิน - ร้านแม่อัมพร</title>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <style>
-    body { font-family: 'Kanit', sans-serif; background-color: #fff7ed; }
-
-    /* การ์ดเมนู (ชาม/จาน) */
-    .dish-card {
-        cursor: pointer;
-        transition: transform .15s, box-shadow .15s;
-        border: 0;
-        border-radius: 20px;
-        min-height: 170px;
-        color: #fff;
-        position: relative;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        padding: 14px 10px;
-        box-shadow: 0 6px 14px rgba(0,0,0,.15);
-    }
-    .dish-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,.2); }
-    .dish-card:active { transform: scale(0.95); }
-    .dish-emoji { font-size: 2.6rem; line-height: 1; margin-bottom: 4px; }
-    .dish-name  { font-size: 1.3rem; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,.3); }
-    .dish-cat   {
-        font-size: .85rem; background: rgba(255,255,255,.3);
-        padding: 2px 12px; border-radius: 50px; margin-bottom: 6px;
-    }
-    .dish-price {
-        font-size: 1.6rem; font-weight: 800; color: #d62828;
-        background: #fff; border-radius: 50px; padding: 0 16px; margin-top: 8px;
-    }
-    .dish-qty {
-        position: absolute; top: 8px; right: 8px;
-        background: #fff; color: #d62828; font-weight: 800;
-        min-width: 32px; height: 32px; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 2px 6px rgba(0,0,0,.3);
-    }
-
-    /* ชื่อบัญชีใต้ QR */
-    .account-box {
-        background: #f1f8ff; border: 1px dashed #0d6efd;
-        border-radius: 12px; padding: 8px 12px; margin-bottom: 10px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบคิดเงิน - ร้านแม่อัมพร</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+body { font-family: 'Kanit', sans-serif; background-color: #fff7ed; }
+.dish-card {
+    cursor: pointer; transition: transform .15s, box-shadow .15s;
+    border: 0; border-radius: 20px; min-height: 170px; color: #fff;
+    position: relative; overflow: hidden; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center;
+    padding: 14px 10px; box-shadow: 0 6px 14px rgba(0,0,0,.15);
+}
+.dish-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,.2); }
+.dish-card:active { transform: scale(0.95); }
+.dish-emoji { font-size: 2.6rem; line-height: 1; margin-bottom: 4px; }
+.dish-name { font-size: 1.3rem; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,.3); }
+.dish-cat { font-size: .85rem; background: rgba(255,255,255,.3); padding: 2px 12px; border-radius: 50px; margin-bottom: 6px; }
+.dish-price { font-size: 1.6rem; font-weight: 800; color: #d62828; background: #fff; border-radius: 50px; padding: 0 16px; margin-top: 8px; }
+.dish-qty {
+    position: absolute; top: 8px; right: 8px; background: #fff; color: #d62828; font-weight: 800;
+    min-width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+.account-box { background: #f1f8ff; border: 1px dashed #0d6efd; border-radius: 12px; padding: 8px 12px; margin-bottom: 10px; }
 </style>
 </head>
 <body>
 
 <div class="container py-3">
-    <!-- Header -->
+
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h3 class="m-0 fw-bold text-danger">🍜 ร้านแม่อัมพร</h3>
-        <button class="btn btn-outline-secondary btn-sm" onclick="toggleAdminModal()">⚙️ เพิ่มเมนู (Admin)</button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="openAdmin()">⚙️ Admin</button>
     </div>
 
-    <!-- รายการประเภทจาน / เมนูอาหาร -->
     <div class="row g-2 mb-3" id="menu-container">
         <div class="text-center text-muted">กำลังโหลดรายการอาหาร...</div>
     </div>
 
-    <!-- สรุปรายการในโต๊ะ -->
     <div class="card shadow-sm mb-3">
         <div class="card-body">
             <h5 class="card-title fw-bold">รายการอาหารที่สั่ง</h5>
@@ -82,13 +55,12 @@
         </div>
     </div>
 
-    <!-- ปุ่มคิดเงิน -->
     <div class="d-grid gap-2 mb-4">
         <button class="btn btn-success btn-lg py-3 fw-bold" onclick="processPayment()">💳 คิดเงิน / แสดง QR Code</button>
         <button class="btn btn-outline-danger" onclick="clearCart()">ล้างรายการ</button>
     </div>
 
-    <!-- Modal แสดง PromptPay QR Code ล็อกยอดเงิน -->
+    <!-- Modal QR -->
     <div class="modal fade" id="paymentModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content text-center p-3">
@@ -97,166 +69,227 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-    <p class="text-muted mb-2">เปิดแอปธนาคารแล้วสแกน QR Code ด้านล่าง</p>
-
-    <div class="d-flex justify-content-center mb-2">
-        <div id="qr-canvas" class="border p-2 bg-white rounded shadow-sm"></div>
-    </div>
-
-    <!-- ชื่อบัญชีให้ลูกค้าตรวจสอบ -->
-    <div class="account-box">
-        <div class="small text-muted">ตรวจสอบชื่อบัญชีก่อนโอน</div>
-        <div class="fw-bold fs-5 text-primary">ชื่อบัญชี น.ส.เกวรินทร์ เอกสินิทธ์กุล</div>
-    </div>
-
-    <h3 class="fw-bold text-danger">ยอดโอน: <span id="pay-amount">0</span> บาท</h3>
-    <p class="text-success small mt-2">✓ บันทึกประวัติลง Google Sheets เรียบร้อยแล้ว</p>
-</div>
+                    <p class="text-muted mb-2">เปิดแอปธนาคารแล้วสแกน QR Code ด้านล่าง</p>
+                    <div class="d-flex justify-content-center mb-2">
+                        <div id="qr-canvas" class="border p-2 bg-white rounded shadow-sm"></div>
+                    </div>
+                    <div class="account-box">
+                        <div class="small text-muted">ตรวจสอบชื่อบัญชีก่อนโอน</div>
+                        <div class="fw-bold fs-5 text-primary">ชื่อบัญชี น.ส.เกวรินทร์ เอกสินิทธ์กุล</div>
+                    </div>
+                    <h3 class="fw-bold text-danger">ยอดโอน: <span id="pay-amount">0</span> บาท</h3>
+                    <p id="save-status" class="text-muted small mt-2"></p>
+                    <button id="btn-confirm-paid" class="btn btn-success btn-lg w-100" onclick="confirmPaid()" disabled>✓ ได้รับเงินแล้ว</button>
+                    <div id="paid-done" class="alert alert-success d-none mt-2 mb-0">ยืนยันรับเงินเรียบร้อย ✓</div>
+                </div>
                 <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-primary w-100 py-2" data-bs-dismiss="modal" onclick="clearCart()">ปิดหน้าจอ / รับโต๊ะถัดไป</button>
+                    <button type="button" class="btn btn-outline-secondary w-100 py-2" data-bs-dismiss="modal">ปิด (ยังไม่ยืนยันรับเงิน)</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Admin เพิ่มเมนู -->
+    <!-- Modal Admin -->
     <div class="modal fade" id="adminModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">เพิ่มรายการอาหาร / ประเภทจาน</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">⚙️ หลังบ้าน (Admin)</h5>
+                    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="add-menu-form">
-                        <div class="mb-2">
-                            <label class="form-label">ประเภทจาน / หมวดหมู่</label>
-                            <input type="text" id="adm-cat" class="form-control" placeholder="เช่น จานชมพู, ถ้วยเล็ก" required>
+
+                    <div id="admin-login" class="mx-auto" style="max-width:320px">
+                        <label class="form-label">รหัสผ่าน Admin</label>
+                        <input type="password" id="admin-pw" class="form-control mb-2" onkeydown="if(event.key==='Enter')adminLogin()">
+                        <div id="admin-err" class="text-danger small mb-2"></div>
+                        <button class="btn btn-primary w-100" onclick="adminLogin()">เข้าสู่ระบบ</button>
+                    </div>
+
+                    <div id="admin-dash" class="d-none">
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                            <div class="btn-group" id="tab-group">
+                                <button class="btn btn-outline-dark active" data-tab="sales" onclick="showTab('sales')">📊 สรุปยอดขาย</button>
+                                <button class="btn btn-outline-dark" data-tab="menu" onclick="showTab('menu')">🍜 เพิ่มเมนู</button>
+                            </div>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="adminLogout()">ออกจากระบบ</button>
                         </div>
-                        <div class="mb-2">
-                            <label class="form-label">ชื่อรายการ</label>
-                            <input type="text" id="adm-name" class="form-control" placeholder="เช่น ก๋วยเตี๋ยว พิเศษ" required>
+
+                        <div id="tab-sales">
+                            <div class="btn-group mb-3" id="mode-group">
+                                <button class="btn btn-outline-primary active" data-mode="day" onclick="loadReport('day')">รายวัน</button>
+                                <button class="btn btn-outline-primary" data-mode="month" onclick="loadReport('month')">รายเดือน</button>
+                                <button class="btn btn-outline-primary" data-mode="year" onclick="loadReport('year')">รายปี</button>
+                            </div>
+
+                            <div class="row g-2 mb-3 text-center">
+                                <div class="col-4"><div class="p-2 rounded bg-primary text-white">
+                                    <div class="small">ยอดขายรวม</div><div class="fs-4 fw-bold" id="sum-sales">0</div></div></div>
+                                <div class="col-4"><div class="p-2 rounded bg-success text-white">
+                                    <div class="small">ยอดโอนเข้า</div><div class="fs-4 fw-bold" id="sum-paid">0</div></div></div>
+                                <div class="col-4"><div class="p-2 rounded bg-warning">
+                                    <div class="small">ค้างชำระ</div><div class="fs-4 fw-bold" id="sum-pending">0</div></div></div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover align-middle text-end">
+                                    <thead class="table-light">
+                                        <tr><th class="text-start" id="col-key">วันที่</th><th>บิล</th><th>ยอดขาย</th><th>โอนเข้า</th><th>ค้างชำระ</th></tr>
+                                    </thead>
+                                    <tbody id="report-body"></tbody>
+                                </table>
+                            </div>
+
+                            <div id="bills-section" class="mt-3">
+                                <h6 class="fw-bold">รายการบิลวันที่ <span id="bills-date"></span></h6>
+                                <div id="bills-body"></div>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">ราคา (บาท)</label>
-                            <input type="number" id="adm-price" class="form-control" placeholder="60" required>
+
+                        <div id="tab-menu" class="d-none mx-auto" style="max-width:480px">
+                            <form id="add-menu-form">
+                                <div class="mb-2">
+                                    <label class="form-label">ประเภทจาน / หมวดหมู่</label>
+                                    <input type="text" id="adm-cat" class="form-control" placeholder="เช่น จานชมพู, ถ้วยเล็ก">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label">ชื่อรายการ</label>
+                                    <input type="text" id="adm-name" class="form-control" placeholder="เช่น ก๋วยเตี๋ยว พิเศษ">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">ราคา (บาท)</label>
+                                    <input type="number" id="adm-price" class="form-control" placeholder="60">
+                                </div>
+                                <button type="button" class="btn btn-primary w-100" onclick="submitNewMenu()">+ บันทึกรายการใหม่</button>
+                            </form>
                         </div>
-                        <button type="button" class="btn btn-primary w-100" onclick="submitNewMenu()">+ บันทึกรายการใหม่</button>
-                    </form>
+                    </div>
+
                 </div>
             </div>
         </div>
     </div>
-</div>
 
+</div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxcjIGASjvsbbWSlpEEKF7uUZ5p5qcd783VYzxB8N5QyWZ24GpvlblqyVGLFl7dP3eW/exec"; // นำ Web App URL จาก Apps Script มาวางตรงนี้
-    const PROMPTPAY_ID = "0831595830";        // เบอร์โทรศัพท์ PromptPay ของร้านแม่อัมพร
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxcjIGASjvsbbWSlpEEKF7uUZ5p5qcd783VYzxB8N5QyWZ24GpvlblqyVGLFl7dP3eW/exec";
+const PROMPTPAY_ID = "0831595830";
 
-    let menuData = [];
-    let cart = {};
-    let currentTotal = 0;
+let menuData = [];
+let cart = {};
+let currentTotal = 0;
+let currentOrderId = '';
+let savedCartKey = '';
+let saving = false;
+
 const COLOR_PALETTE = [
-    'linear-gradient(135deg,#ff416c,#ff4b2b)', // แดง
-    'linear-gradient(135deg,#f7971e,#ffb347)', // ส้ม
-    'linear-gradient(135deg,#11998e,#38ef7d)', // เขียว
-    'linear-gradient(135deg,#2193b0,#6dd5ed)', // ฟ้า
-    'linear-gradient(135deg,#8e2de2,#c471ed)', // ม่วง
-    'linear-gradient(135deg,#ec008c,#fc6767)', // ชมพู
-    'linear-gradient(135deg,#f2994a,#f2c94c)'  // เหลือง
+    'linear-gradient(135deg,#ff416c,#ff4b2b)',
+    'linear-gradient(135deg,#f7971e,#ffb347)',
+    'linear-gradient(135deg,#11998e,#38ef7d)',
+    'linear-gradient(135deg,#2193b0,#6dd5ed)',
+    'linear-gradient(135deg,#8e2de2,#c471ed)',
+    'linear-gradient(135deg,#ec008c,#fc6767)',
+    'linear-gradient(135deg,#f2994a,#f2c94c)'
 ];
 const EMOJIS = ['🍜','🍲','🥣','🍛','🍚','🥢'];
 let categoryColors = {};
 
 function getCategoryColor(cat) {
-    if (!(cat in categoryColors)) {
-        categoryColors[cat] = Object.keys(categoryColors).length % COLOR_PALETTE.length;
-    }
+    if (!(cat in categoryColors)) categoryColors[cat] = Object.keys(categoryColors).length % COLOR_PALETTE.length;
     return COLOR_PALETTE[categoryColors[cat]];
 }
-    window.onload = () => {
-        loadMenu();
-    };
 
-    function loadMenu() {
-        fetch(`${GAS_URL}?action=getMenu`)
-            .then(res => res.json())
-            .then(res => {
-                if(res.status === "success") {
-                    menuData = res.data;
-                    renderMenu();
-                }
-            });
-    }
+// ---------- ฟังก์ชันกลาง ----------
+async function api(body) {
+    const r = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(body)
+    });
+    return await r.json();
+}
+const fmt = n => Number(n || 0).toLocaleString('th-TH');
+const esc = s => String(s).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const showModal = id => bootstrap.Modal.getOrCreateInstance(document.getElementById(id)).show();
+const hideModal = id => bootstrap.Modal.getOrCreateInstance(document.getElementById(id)).hide();
+const $ = id => document.getElementById(id);
 
-    function renderMenu() {
-    const container = document.getElementById('menu-container');
+window.onload = () => { loadMenu(); };
+
+// ---------- เมนู / ตะกร้า ----------
+function loadMenu() {
+    fetch(`${GAS_URL}?action=getMenu`)
+        .then(res => res.json())
+        .then(res => {
+            if (res.status === "success") { menuData = res.data; renderMenu(); }
+        });
+}
+
+function renderMenu() {
+    const container = $('menu-container');
     container.innerHTML = '';
     menuData.forEach((item, i) => {
         const qty = cart[item.id] || 0;
         container.innerHTML += `
             <div class="col-6 col-md-4">
-                <div class="dish-card" style="background:${getCategoryColor(item.category)}"
-                     onclick="addToCart('${item.id}')">
+                <div class="dish-card" style="background:${getCategoryColor(item.category)}" onclick="addToCart('${item.id}')">
                     ${qty > 0 ? `<div class="dish-qty">${qty}</div>` : ''}
                     <div class="dish-emoji">${EMOJIS[i % EMOJIS.length]}</div>
-                    <div class="dish-cat">${item.category}</div>
-                    <div class="dish-name">${item.name}</div>
+                    <div class="dish-cat">${esc(item.category)}</div>
+                    <div class="dish-name">${esc(item.name)}</div>
                     <div class="dish-price">${item.price} ฿</div>
                 </div>
-            </div>
-        `;
+            </div>`;
     });
 }
 
-    function addToCart(id) {
-        if(!cart[id]) cart[id] = 0;
-        cart[id]++;
-        updateCartDisplay();
+function addToCart(id) {
+    if (!cart[id]) cart[id] = 0;
+    cart[id]++;
+    updateCartDisplay();
+}
+
+function removeFromCart(id) {
+    if (cart[id]) {
+        cart[id]--;
+        if (cart[id] === 0) delete cart[id];
     }
+    updateCartDisplay();
+}
 
-    function updateCartDisplay() {
-        const container = document.getElementById('order-items');
-        container.innerHTML = '';
-        currentTotal = 0;
+function clearCart() {
+    cart = {};
+    currentOrderId = '';
+    savedCartKey = '';
+    updateCartDisplay();
+}
 
-        Object.keys(cart).forEach(id => {
-            const item = menuData.find(m => String(m.id) === String(id));
-            if(item && cart[id] > 0) {
-                const itemTotal = item.price * cart[id];
-                currentTotal += itemTotal;
-                container.innerHTML += `
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <div><b>${item.name}</b> <small class="text-muted">(${item.category})</small> x ${cart[id]}</div>
-                        <div>
-                            <span class="fw-bold">${itemTotal} ฿</span>
-                            <button class="btn btn-sm btn-outline-danger ms-2" onclick="removeFromCart('${id}')">-</button>
-                        </div>
+function updateCartDisplay() {
+    const container = $('order-items');
+    container.innerHTML = '';
+    currentTotal = 0;
+    Object.keys(cart).forEach(id => {
+        const item = menuData.find(m => String(m.id) === String(id));
+        if (item && cart[id] > 0) {
+            const itemTotal = item.price * cart[id];
+            currentTotal += itemTotal;
+            container.innerHTML += `
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <div><b>${esc(item.name)}</b> <small class="text-muted">(${esc(item.category)})</small> x ${cart[id]}</div>
+                    <div>
+                        <span class="fw-bold">${itemTotal} ฿</span>
+                        <button class="btn btn-sm btn-outline-danger ms-2" onclick="removeFromCart('${id}')">-</button>
                     </div>
-                `;
-            }
-        });
-
-        document.getElementById('total-amount').innerText = currentTotal;
-        renderMenu();   // <-- เพิ่มบรรทัดนี้
-    }
-
-    function removeFromCart(id) {
-        if(cart[id]) {
-            cart[id]--;
-            if(cart[id] === 0) delete cart[id];
+                </div>`;
         }
-        updateCartDisplay();
-    }
+    });
+    $('total-amount').innerText = currentTotal;
+    renderMenu();
+}
 
-    function clearCart() {
-        cart = {};
-        updateCartDisplay();
-    }
-
-    // ประมวลผลสร้าง QR Code พร้อมระบุยอดเงิน และบันทึกข้อมูล
-    // ===== สร้าง PromptPay Payload (มาตรฐาน EMVCo) =====
+// ---------- PromptPay QR (EMVCo) ----------
 function crc16(str) {
     let crc = 0xFFFF;
     for (let i = 0; i < str.length; i++) {
@@ -274,92 +307,258 @@ function tlv(tag, value) {
 }
 
 function generatePromptPayPayload(phone, amount) {
-    // แปลงเบอร์ 0993321144 -> 0066993321144
     let target = phone.replace(/\D/g, '');
     target = '0066' + target.replace(/^0/, '');
-
     const merchant = tlv('00', 'A000000677010111') + tlv('01', target);
-
     let payload =
         tlv('00', '01') +
         tlv('01', amount ? '12' : '11') +
         tlv('29', merchant) +
         tlv('58', 'TH') +
         tlv('53', '764');
-
     if (amount) payload += tlv('54', Number(amount).toFixed(2));
-
     payload += '6304';
     return payload + crc16(payload);
 }
 
-// ===== ประมวลผลชำระเงิน =====
-function processPayment() {
-    if (currentTotal <= 0) return alert('กรุณาเลือกรายการก่อนครับ');
-
-    document.getElementById('pay-amount').innerText = currentTotal;
-
-    // สร้าง QR
-    const payload = generatePromptPayPayload(PROMPTPAY_ID, currentTotal);
-    const qrBox = document.getElementById('qr-canvas');
-    qrBox.innerHTML = '';
-    new QRCode(qrBox, {
-        text: payload,
-        width: 260,
-        height: 260,
-        correctLevel: QRCode.CorrectLevel.M
-    });
-
-    // แสดง Modal
-    const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
-    modal.show();
-
-    // บันทึกลง Google Sheets (ถ้า error ก็ไม่กระทบการแสดง QR)
-    try { saveOrderToSheet(); } catch (e) { console.error(e); }
+// ---------- ชำระเงิน ----------
+function cartKey() {
+    return Object.keys(cart).sort().map(k => k + ':' + cart[k]).join(',');
 }
 
-    function saveOrderToSheet() {
+async function processPayment() {
+    if (currentTotal <= 0) return alert('กรุณาเลือกรายการก่อนครับ');
+    if (saving) return;
+
+    $('pay-amount').innerText = currentTotal;
+
+    const payload = generatePromptPayPayload(PROMPTPAY_ID, currentTotal);
+    const qrBox = $('qr-canvas');
+    qrBox.innerHTML = '';
+    new QRCode(qrBox, { text: payload, width: 260, height: 260, correctLevel: QRCode.CorrectLevel.M });
+
+    $('paid-done').classList.add('d-none');
+    $('btn-confirm-paid').classList.remove('d-none');
+    showModal('paymentModal');
+
+    const key = cartKey();
+
+    // ตะกร้าเดิมที่บันทึกบิลแล้ว ไม่สร้างบิลซ้ำ
+    if (currentOrderId && key === savedCartKey) {
+        $('btn-confirm-paid').disabled = false;
+        $('save-status').className = 'text-muted small mt-2';
+        $('save-status').innerText = 'บันทึกบิลแล้ว (รอยืนยันรับเงิน)';
+        return;
+    }
+
+    $('btn-confirm-paid').disabled = true;
+    $('save-status').className = 'text-muted small mt-2';
+    $('save-status').innerText = 'กำลังบันทึกบิล...';
+    saving = true;
+
+    try {
         const orderItems = Object.keys(cart).map(id => {
             const item = menuData.find(m => String(m.id) === String(id));
-            return { name: `${item.name} [${item.category}]`, qty: cart[id] };
-        });
+            return item ? { name: `${item.name} [${item.category}]`, qty: cart[id] } : null;
+        }).filter(Boolean);
 
-        fetch(GAS_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                action: "saveOrder",
-                order: {
-                    items: orderItems,
-                    totalAmount: currentTotal
-                }
-            })
-        });
+        const res = await api({ action: 'saveOrder', order: { items: orderItems, totalAmount: currentTotal } });
+        if (res.status !== 'success') throw new Error(res.message || 'บันทึกไม่สำเร็จ');
+
+        currentOrderId = res.orderId;
+        savedCartKey = key;
+        $('btn-confirm-paid').disabled = false;
+        $('save-status').innerText = 'บันทึกบิลแล้ว (รอยืนยันรับเงิน)';
+    } catch (e) {
+        console.error(e);
+        currentOrderId = '';
+        savedCartKey = '';
+        $('save-status').className = 'text-danger small mt-2';
+        $('save-status').innerText = 'บันทึกบิลไม่สำเร็จ ปิดหน้าต่างแล้วกดคิดเงินใหม่อีกครั้ง';
+    } finally {
+        saving = false;
     }
+}
 
-    function toggleAdminModal() {
-        new bootstrap.Modal(document.getElementById('adminModal')).show();
+async function confirmPaid() {
+    if (!currentOrderId) return;
+    const btn = $('btn-confirm-paid');
+    btn.disabled = true;
+    try {
+        const res = await api({ action: 'confirmPayment', orderId: currentOrderId });
+        if (res.status !== 'success') throw new Error(res.message || 'ยืนยันไม่สำเร็จ');
+
+        btn.classList.add('d-none');
+        $('paid-done').classList.remove('d-none');
+        clearCart();
+        setTimeout(() => hideModal('paymentModal'), 1200);
+    } catch (e) {
+        alert(e.message || e);
+        btn.disabled = false;
     }
+}
 
-    function submitNewMenu() {
-        const category = document.getElementById('adm-cat').value;
-        const name = document.getElementById('adm-name').value;
-        const price = document.getElementById('adm-price').value;
+// ---------- Admin ----------
+let adminPw = '';
+let adminMode = 'day';
+let adminDate = '';
 
-        if(!category || !name || !price) return alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+const TH_MONTH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 
-        fetch(GAS_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                action: "updateMenu",
-                menuItem: { category, name, price }
-            })
-        }).then(() => {
-            alert('เพิ่มรายการเรียบร้อย');
-            bootstrap.Modal.getInstance(document.getElementById('adminModal')).hide();
-            document.getElementById('add-menu-form').reset();
-            loadMenu();
+function labelOf(key) {
+    const p = key.split('-');
+    if (p.length === 3) return `${+p[2]} ${TH_MONTH[+p[1] - 1]} ${+p[0] + 543}`;
+    if (p.length === 2) return `${TH_MONTH[+p[1] - 1]} ${+p[0] + 543}`;
+    return `พ.ศ. ${+p[0] + 543}`;
+}
+
+function showDash() {
+    $('admin-login').classList.add('d-none');
+    $('admin-dash').classList.remove('d-none');
+    showTab('sales');
+    loadReport(adminMode);
+}
+
+function openAdmin() {
+    showModal('adminModal');
+    if (adminPw) {
+        showDash();
+    } else {
+        $('admin-login').classList.remove('d-none');
+        $('admin-dash').classList.add('d-none');
+        $('admin-pw').value = '';
+        $('admin-err').innerText = '';
+    }
+}
+
+async function adminLogin() {
+    const pw = $('admin-pw').value;
+    const err = $('admin-err');
+    err.innerText = 'กำลังตรวจสอบ...';
+    try {
+        const res = await api({ action: 'adminLogin', password: pw });
+        if (res.status !== 'success') { err.innerText = 'รหัสผ่านไม่ถูกต้อง'; return; }
+        adminPw = pw;
+        err.innerText = '';
+        showDash();
+    } catch (e) {
+        err.innerText = 'เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง';
+    }
+}
+
+function adminLogout() {
+    adminPw = '';
+    hideModal('adminModal');
+}
+
+function showTab(tab) {
+    document.querySelectorAll('#tab-group button').forEach(b =>
+        b.classList.toggle('active', b.dataset.tab === tab));
+    $('tab-sales').classList.toggle('d-none', tab !== 'sales');
+    $('tab-menu').classList.toggle('d-none', tab !== 'menu');
+}
+
+async function loadReport(mode) {
+    adminMode = mode;
+    document.querySelectorAll('#mode-group button').forEach(b =>
+        b.classList.toggle('active', b.dataset.mode === mode));
+    $('col-key').innerText = mode === 'day' ? 'วันที่' : (mode === 'month' ? 'เดือน' : 'ปี');
+    $('bills-section').classList.toggle('d-none', mode !== 'day');
+
+    const body = $('report-body');
+    body.innerHTML = '<tr><td colspan="5" class="text-center text-muted">กำลังโหลด...</td></tr>';
+
+    try {
+        const res = await api({ action: 'adminReport', password: adminPw, mode: mode });
+        if (res.status !== 'success') { body.innerHTML = `<tr><td colspan="5">${esc(res.message)}</td></tr>`; return; }
+
+        $('sum-sales').innerText = fmt(res.total.sales);
+        $('sum-paid').innerText = fmt(res.total.paid);
+        $('sum-pending').innerText = fmt(res.total.pending);
+
+        if (!res.rows.length) {
+            body.innerHTML = '<tr><td colspan="5" class="text-center text-muted">ยังไม่มีข้อมูล</td></tr>';
+        } else {
+            body.innerHTML = res.rows.map(r => `
+                <tr ${mode === 'day' ? `style="cursor:pointer" onclick="loadBills('${r.key}')"` : ''}>
+                    <td class="text-start">${labelOf(r.key)}</td>
+                    <td>${r.bills}</td>
+                    <td class="fw-bold">${fmt(r.sales)}</td>
+                    <td class="text-success fw-bold">${fmt(r.paid)}</td>
+                    <td class="${r.pending > 0 ? 'text-danger fw-bold' : ''}">${fmt(r.pending)}</td>
+                </tr>`).join('');
+        }
+
+        if (mode === 'day') loadBills(adminDate || new Date().toLocaleDateString('sv-SE'));
+    } catch (e) {
+        body.innerHTML = '<tr><td colspan="5" class="text-danger text-center">เชื่อมต่อไม่ได้</td></tr>';
+    }
+}
+
+async function loadBills(date) {
+    adminDate = date;
+    $('bills-date').innerText = labelOf(date);
+    const box = $('bills-body');
+    box.innerHTML = '<div class="text-muted">กำลังโหลด...</div>';
+
+    try {
+        const res = await api({ action: 'adminBills', password: adminPw, date: date });
+        if (res.status !== 'success') { box.innerHTML = esc(res.message); return; }
+        if (!res.bills.length) { box.innerHTML = '<div class="text-muted">ไม่มีบิลในวันนี้</div>'; return; }
+
+        const badge = { 'ชำระแล้ว': 'success', 'รอชำระ': 'warning text-dark', 'ยกเลิก': 'secondary' };
+        box.innerHTML = res.bills.map(b => `
+            <div class="border rounded p-2 mb-2 ${b.status === 'ยกเลิก' ? 'opacity-50' : ''}">
+                <div class="d-flex justify-content-between">
+                    <span class="small text-muted">${b.time} · ${esc(b.orderId)}</span>
+                    <span class="badge bg-${badge[b.status]}">${b.status}</span>
+                </div>
+                <div>${esc(b.items)}</div>
+                <div class="d-flex justify-content-between align-items-center mt-1 flex-wrap gap-1">
+                    <b>${fmt(b.amount)} บาท</b>
+                    <span>
+                        ${b.status === 'รอชำระ' ? `<button class="btn btn-sm btn-success" onclick="setBill('${b.orderId}','ชำระแล้ว')">ยืนยันรับเงิน</button>` : ''}
+                        ${b.status !== 'ยกเลิก' ? `<button class="btn btn-sm btn-outline-danger" onclick="setBill('${b.orderId}','ยกเลิก')">ยกเลิก</button>` : ''}
+                        ${b.status !== 'รอชำระ' ? `<button class="btn btn-sm btn-outline-secondary" onclick="setBill('${b.orderId}','รอชำระ')">คืนเป็นรอชำระ</button>` : ''}
+                    </span>
+                </div>
+            </div>`).join('');
+    } catch (e) {
+        box.innerHTML = '<div class="text-danger">เชื่อมต่อไม่ได้</div>';
+    }
+}
+
+async function setBill(orderId, newStatus) {
+    if (newStatus === 'ยกเลิก' && !confirm('ยืนยันยกเลิกบิลนี้?')) return;
+    try {
+        const res = await api({ action: 'adminSetStatus', password: adminPw, orderId: orderId, newStatus: newStatus });
+        if (res.status !== 'success') { alert(res.message); return; }
+        loadReport(adminMode);
+    } catch (e) {
+        alert('เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง');
+    }
+}
+
+async function submitNewMenu() {
+    const category = $('adm-cat').value.trim();
+    const name = $('adm-name').value.trim();
+    const price = $('adm-price').value;
+    if (!category || !name || !price) return alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+
+    try {
+        const res = await api({
+            action: 'updateMenu',
+            password: adminPw,
+            menuItem: { category, name, price }
         });
+        if (res.status !== 'success') { alert(res.message || 'เพิ่มรายการไม่สำเร็จ'); return; }
+        alert('เพิ่มรายการเรียบร้อย');
+        $('add-menu-form').reset();
+        loadMenu();
+    } catch (e) {
+        alert('เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง');
     }
+}
 </script>
 </body>
 </html>
