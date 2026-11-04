@@ -111,6 +111,7 @@ body { font-family: 'Kanit', sans-serif; background-color: #fff7ed; }
                             <div class="btn-group" id="tab-group">
                                 <button class="btn btn-outline-dark active" data-tab="sales" onclick="showTab('sales')">📊 สรุปยอดขาย</button>
                                 <button class="btn btn-outline-dark" data-tab="menu" onclick="showTab('menu')">🍜 เพิ่มเมนู</button>
+                                <button class="btn btn-outline-dark" data-tab="price" onclick="showTab('price')">✏️ แก้ไขเมนู</button>
                             </div>
                             <button class="btn btn-outline-secondary btn-sm" onclick="adminLogout()">ออกจากระบบ</button>
                         </div>
@@ -163,6 +164,14 @@ body { font-family: 'Kanit', sans-serif; background-color: #fff7ed; }
                                 <button type="button" class="btn btn-primary w-100" onclick="submitNewMenu()">+ บันทึกรายการใหม่</button>
                             </form>
                         </div>
+                        <div id="tab-price" class="d-none mx-auto" style="max-width:760px">
+    <div class="small text-muted mb-2">
+        แก้หมวดหมู่ ชื่อ หรือราคา แล้วกด "บันทึก" ทีละรายการ ·
+        "ซ่อน" คือเอาออกจากหน้าขาย (ข้อมูลและบิลเก่ายังอยู่ กดแสดงกลับได้) ·
+        บิลเก่าไม่เปลี่ยนชื่อและราคา
+    </div>
+    <div id="price-list"></div>
+</div>
                     </div>
 
                 </div>
@@ -323,7 +332,7 @@ function generatePromptPayPayload(phone, amount) {
 
 // ---------- ชำระเงิน ----------
 function cartKey() {
-    return Object.keys(cart).sort().map(k => k + ':' + cart[k]).join(',');
+    return Object.keys(cart).sort().map(k => k + ':' + cart[k]).join(',') + '|' + currentTotal;
 }
 
 async function processPayment() {
@@ -456,6 +465,8 @@ function showTab(tab) {
         b.classList.toggle('active', b.dataset.tab === tab));
     $('tab-sales').classList.toggle('d-none', tab !== 'sales');
     $('tab-menu').classList.toggle('d-none', tab !== 'menu');
+    $('tab-price').classList.toggle('d-none', tab !== 'price');
+    if (tab === 'price') loadAdminMenu();
 }
 
 async function loadReport(mode) {
@@ -559,6 +570,98 @@ async function submitNewMenu() {
         alert('เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง');
     }
 }
+let adminMenu = [];
+
+async function loadAdminMenu() {
+    const box = $('price-list');
+    box.innerHTML = '<div class="text-muted">กำลังโหลด...</div>';
+    try {
+        const res = await api({ action: 'adminMenuList', password: adminPw });
+        if (res.status !== 'success') { box.innerHTML = esc(res.message || 'โหลดไม่สำเร็จ'); return; }
+        adminMenu = res.data;
+        renderPriceList();
+    } catch (e) {
+        box.innerHTML = '<div class="text-danger">เชื่อมต่อไม่ได้</div>';
+    }
+}
+
+function renderPriceList() {
+    const box = $('price-list');
+    if (!adminMenu.length) { box.innerHTML = '<div class="text-muted">ยังไม่มีรายการเมนู</div>'; return; }
+    box.innerHTML = adminMenu.map((m, i) => `
+        <div class="border rounded p-2 mb-2 ${m.active ? '' : 'bg-light'}">
+            <div class="row g-2 align-items-center">
+                <div class="col-6 col-md-3">
+                    <input id="mc-${i}" class="form-control form-control-sm" value="${esc(m.category)}" placeholder="หมวดหมู่">
+                </div>
+                <div class="col-6 col-md-4">
+                    <input id="mn-${i}" class="form-control form-control-sm" value="${esc(m.name)}" placeholder="ชื่อเมนู">
+                </div>
+                <div class="col-4 col-md-2">
+                    <input id="mp-${i}" type="number" min="1" class="form-control form-control-sm" value="${m.price}">
+                </div>
+                <div class="col-8 col-md-3 text-end">
+                    <button class="btn btn-sm btn-primary" onclick="saveItem(${i}, this)">บันทึก</button>
+                    <button class="btn btn-sm ${m.active ? 'btn-outline-secondary' : 'btn-outline-success'}"
+                            onclick="toggleActive(${i}, this)">${m.active ? 'ซ่อน' : 'แสดง'}</button>
+                </div>
+            </div>
+            ${m.active ? '' : '<div class="small text-danger mt-1">ซ่อนอยู่ (ไม่แสดงในหน้าขาย)</div>'}
+        </div>`).join('');
+}
+
+async function saveItem(i, btn) {
+    const m = adminMenu[i];
+    const category = $('mc-' + i).value.trim();
+    const name = $('mn-' + i).value.trim();
+    const price = Number($('mp-' + i).value);
+    if (!category || !name || !(price > 0)) return alert('กรุณากรอกหมวดหมู่ ชื่อ และราคาให้ถูกต้อง');
+
+    btn.disabled = true;
+    btn.innerText = 'กำลังบันทึก...';
+    try {
+        const res = await api({ action: 'updateMenuItem', password: adminPw,
+                                id: m.id, category, name, price });
+        if (res.status !== 'success') throw new Error(res.message || 'บันทึกไม่สำเร็จ');
+
+        m.category = res.category; m.name = res.name; m.price = res.price;
+        const item = menuData.find(x => String(x.id) === String(m.id));
+        if (item) { item.category = res.category; item.name = res.name; item.price = res.price; }
+        updateCartDisplay();           // วาดเมนูและยอดในตะกร้าใหม่
+        btn.innerText = '✓ แล้ว';
+        setTimeout(() => { btn.disabled = false; btn.innerText = 'บันทึก'; }, 1200);
+    } catch (e) {
+        alert(e.message || 'เชื่อมต่อไม่ได้');
+        btn.disabled = false;
+        btn.innerText = 'บันทึก';
+    }
+}
+
+async function toggleActive(i, btn) {
+    const m = adminMenu[i];
+    const makeActive = !m.active;
+    if (!makeActive && !confirm(`ซ่อน "${m.name}" ออกจากหน้าขาย?`)) return;
+
+    btn.disabled = true;
+    try {
+        const res = await api({ action: 'setMenuActive', password: adminPw, id: m.id, active: makeActive });
+        if (res.status !== 'success') throw new Error(res.message || 'ไม่สำเร็จ');
+
+        m.active = res.active;
+        if (res.active) {
+            loadMenu();                // โหลดเมนูหน้าขายใหม่ ให้รายการที่แสดงกลับมาโผล่
+        } else {
+            menuData = menuData.filter(x => String(x.id) !== String(m.id));
+            delete cart[m.id];         // เอาออกจากตะกร้าด้วย ถ้ามีค้างอยู่
+            updateCartDisplay();
+        }
+        renderPriceList();
+    } catch (e) {
+        alert(e.message || 'เชื่อมต่อไม่ได้');
+        btn.disabled = false;
+    }
+}
+    
 </script>
 </body>
 </html>
