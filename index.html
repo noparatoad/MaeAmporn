@@ -125,6 +125,22 @@ body{
 .table-clean th{ background:var(--bg); font-weight:600; padding:8px 10px; text-align:right; }
 .table-clean td{ padding:8px 10px; text-align:right; border-bottom:1px solid var(--line); }
 .table-clean th:first-child,.table-clean td:first-child{ text-align:left; }
+
+/* ===== เมนูแยกตามประเภท ===== */
+.cat-section { margin-bottom: 18px; }
+.cat-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px; margin-bottom: 10px;
+  border-left: 5px solid var(--accent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 10%, #fff);
+  font-weight: 700; color: #333;
+}
+.cat-head .cat-count {
+  margin-left: auto; font-size: .8rem; font-weight: 500; color: #888;
+}
+.cat-section .dish-cat { display: none; }   /* หัวข้อประเภทบอกอยู่แล้ว ไม่ต้องซ้ำในการ์ด */
+
 </style>
 </head>
 <body>
@@ -391,21 +407,55 @@ async function loadMenu() {
     }
 }
 
+/* ประเภทเมนู เรียงตามลำดับที่แสดง (keys = คำที่ใช้จับคู่กับชื่อหมวดในชีต) */
+const CAT_GROUPS = [
+    { name: 'ประเภทข้าว',       icon: '🍚', color: '#b08a4a', keys: ['ข้าว'] },
+    { name: 'ประเภทก๋วยเตี๋ยว',  icon: '🍜', color: '#c0773f', keys: ['ก๋วยเตี๋ยว', 'เส้น', 'บะหมี่'] },
+    { name: 'ประเภทของกินเล่น',  icon: '🍢', color: '#7f9a5a', keys: ['กินเล่น', 'ทานเล่น', 'ของทอด', 'ขนม'] },
+    { name: 'ประเภทเครื่องดื่ม',  icon: '🥤', color: '#5b86a8', keys: ['เครื่องดื่ม', 'น้ำ', 'กาแฟ', 'ชา', 'นม'] },
+    { name: 'ประเภทอื่นๆ',      icon: '🍽️', color: '#8a8a8a', keys: [] }
+];
+
+function groupIndexOf(category) {
+    const c = String(category || '');
+    for (let i = 0; i < CAT_GROUPS.length - 1; i++)
+        if (CAT_GROUPS[i].keys.some(k => c.includes(k))) return i;
+    return CAT_GROUPS.length - 1;   // ไม่เข้าพวกไหน = อื่นๆ
+}
+
 function renderMenu() {
-    const cats = [...new Set(menu.map(m => m.category))];
-    $('menu-container').innerHTML = menu.length ? menu.map(m => `
-        <div class="col-6 col-md-4">
-            <div class="dish" style="--accent:${COLORS[cats.indexOf(m.category) % COLORS.length]}"
-                 onclick="addItem('${esc(m.id)}')">
-                ${cart[m.id] ? `<div class="dish-qty">${cart[m.id]}</div>` : ''}
-                <div>
-                    <div class="dish-cat">${esc(m.category)}</div>
-                    <div class="dish-name">${esc(m.name)}</div>
-                </div>
-                <div class="dish-price">${fmt(m.price)} ฿</div>
+    const box = $('menu-container');
+    box.className = '';             // ใช้เลย์เอาต์ของเราเอง แทน .row เดิม
+    if (!menu.length) {
+        box.innerHTML = '<div class="text-center text-muted py-4">ยังไม่มีเมนู เพิ่มได้ที่หลังบ้าน</div>';
+        return;
+    }
+    const groups = CAT_GROUPS.map(() => []);
+    menu.forEach(m => groups[groupIndexOf(m.category)].push(m));
+
+    box.innerHTML = CAT_GROUPS.map((g, gi) => {
+        if (!groups[gi].length) return '';          // ประเภทที่ไม่มีเมนู ไม่ต้องแสดง
+        return `
+        <div class="cat-section" style="--accent:${g.color}">
+            <div class="cat-head">
+                <span>${g.icon}</span><span>${g.name}</span>
+                <span class="cat-count">${groups[gi].length} รายการ</span>
             </div>
-        </div>`).join('')
-        : '<div class="col-12 text-center text-muted py-4">ยังไม่มีเมนู เพิ่มได้ที่หลังบ้าน</div>';
+            <div class="row g-2">
+                ${groups[gi].map(m => `
+                <div class="col-6 col-md-4">
+                    <div class="dish" onclick="addItem('${esc(m.id)}')">
+                        ${cart[m.id] ? `<div class="dish-qty">${cart[m.id]}</div>` : ''}
+                        <div>
+                            <div class="dish-cat">${esc(m.category)}</div>
+                            <div class="dish-name">${esc(m.name)}</div>
+                        </div>
+                        <div class="dish-price">${fmt(m.price)} ฿</div>
+                    </div>
+                </div>`).join('')}
+            </div>
+        </div>`;
+    }).join('');
 }
 
 /* ===== ตะกร้า ===== */
