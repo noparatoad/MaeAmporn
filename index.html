@@ -729,25 +729,55 @@ async function loadReport(mode) {
 const STATUSES = ['รอชำระ', 'ชำระแล้ว', 'ยกเลิก'];
 const BADGE = { 'รอชำระ': 'warning', 'ชำระแล้ว': 'success', 'ยกเลิก': 'secondary' };
 
+// ใช้เกณฑ์เดียวกับ adminReport ใน Code.gs
+function methodOf(channel) {
+    return String(channel || '').trim() === 'เงินสด' ? 'cash' : 'transfer';
+}
 async function loadBills() {
     const box = $('bills-list');
     box.innerHTML = '<div class="text-muted text-center py-3">กำลังโหลด...</div>';
     try {
         const res = await adminApi({ action: 'adminBills', date: $('bill-date').value });
-        box.innerHTML = res.bills.length ? res.bills.map(b => `
-            <div class="d-flex flex-wrap align-items-center gap-2 border-bottom py-2">
+        const bills = res.bills;
+        if (!bills.length) {
+            box.innerHTML = '<div class="text-muted text-center py-3">ไม่มีบิลในวันนี้</div>';
+            return;
+        }
+
+        // สรุปยอดที่ชำระแล้ว แยกเงินสด/เงินโอน (ไว้เทียบกับยอดเข้าบัญชีธนาคาร)
+        let cash = 0, transfer = 0;
+        bills.forEach(b => {
+    if (b.status !== 'ชำระแล้ว') return;
+    if (methodOf(b.channel) === 'cash') cash += Number(b.amount);
+    else transfer += Number(b.amount);
+});
+        const summary = `
+            <div class="d-flex flex-wrap gap-3 p-2 mb-2 rounded" style="background:#f4f6f5">
+                <div>💵 เงินสด (ชำระแล้ว): <b>${fmt(cash)} ฿</b></div>
+                <div>📲 เงินโอน (ชำระแล้ว): <b>${fmt(transfer)} ฿</b></div>
+            </div>`;
+
+        const rows = bills.map(b => {
+            const badge = methodOf(b.channel) === 'cash'
+    ? '<span class="badge bg-success-subtle text-success-emphasis border">💵 เงินสด</span>'
+    : '<span class="badge bg-primary-subtle text-primary-emphasis border">📲 เงินโอน</span>';
+            return `
+            <div class="d-flex flex-wrap align-items-center gap-2 border-bottom py-2 ${b.status === 'ยกเลิก' ? 'opacity-50' : ''}">
                 <div style="min-width:56px" class="text-muted">${esc(b.time)}</div>
                 <div style="flex:1;min-width:180px">
                     <div>${esc(b.items)}</div>
                     <div class="small text-muted">${esc(b.orderId)}</div>
                 </div>
                 <div class="fw-bold">${fmt(b.amount)} ฿</div>
+                ${badge}
                 <select class="form-select form-select-sm w-auto"
                         onchange="setBillStatus('${esc(b.orderId)}', this.value)">
                     ${STATUSES.map(s => `<option ${s === b.status ? 'selected' : ''}>${s}</option>`).join('')}
                 </select>
-            </div>`).join('')
-            : '<div class="text-muted text-center py-3">ไม่มีบิลในวันนี้</div>';
+            </div>`;
+        }).join('');
+
+        box.innerHTML = summary + rows;
     } catch (e) {
         box.innerHTML = '<div class="text-danger text-center py-3">' + esc(e.message) + '</div>';
     }
