@@ -364,6 +364,7 @@ body{
 /* ===== ตั้งค่า (แก้ 2 บรรทัดนี้) ===== */
 const API_URL = "https://script.google.com/macros/s/AKfycbxcjIGASjvsbbWSlpEEKF7uUZ5p5qcd783VYzxB8N5QyWZ24GpvlblqyVGLFl7dP3eW/exec";
 const PROMPTPAY_ID = "0831595830";
+const ACCOUNT_NAME = "ชื่อบัญชี น.ส.เกวรินทร์ เอกสินิทธ์กุล";
 
 /* ===== ตัวแปรหลัก ===== */
 let menu = [];            // เมนูที่เปิดขาย
@@ -584,6 +585,18 @@ function drawQR() {
         width: 240, height: 240,
         correctLevel: QRCode.CorrectLevel.M
     });
+
+    // ชื่อบัญชีใต้ QR ให้ลูกค้าตรวจสอบก่อนโอน
+    let nm = $('qr-account');
+    if (!nm) {
+        nm = document.createElement('div');
+        nm.id = 'qr-account';
+        nm.style.cssText = 'text-align:center;margin-top:10px;line-height:1.4';
+        box.insertAdjacentElement('afterend', nm);
+    }
+    nm.innerHTML =
+        '<div style="font-size:.8rem;color:#888">ชื่อบัญชี</div>' +
+        '<div style="font-weight:700;font-size:1.05rem;color:#333">' + esc(ACCOUNT_NAME) + '</div>';
 }
 
 /* ===== สแกนจ่าย ===== */
